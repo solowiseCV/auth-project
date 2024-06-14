@@ -24,7 +24,7 @@ userAuthRoutes.post("/otp-verification",signUpHandler)
 
 userAuthRoutes.post("/signup",Validate(signUpSchema) ,signUpHandler);
 userAuthRoutes.post(
-  "/otp-verification",
+  "/otp_verification",
   Validate(otpCodeSchema),
   verifyOtpHandler
 );
