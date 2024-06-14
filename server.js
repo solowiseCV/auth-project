@@ -1,95 +1,40 @@
-import express, {Router} from 'express';
-import cors from 'cors';
-import bodyParser from 'body-parser';
-import errorHandler from './middlewares/error/error.middleware.js';
-import database from './database/connection.js';
-import baseRoute from './routes/index.js';
-import dotenv from 'dotenv';
-import cookieParser from 'cookie-parser';
-import session from "express-session";
-import passport from "passport";
-import googleAuthMiddleware from "./middlewares/authentication/googleAuthMiddleware.js";
-import googleAuthRoutes from "./routes/authentication/googleAuthRoutes.js";
-import multer from 'multer';
+import "dotenv/config";
+import express, { Router, urlencoded } from "express";
+import cors from "cors";
+import "./config/db.js";
+import env from "./config/env.js"
+import baseRoutes from "./routes/index.js";
+import { ErrorHandler } from "./middlewares/errorHandler.js";
+import connectDB from "./config/db.js";
 
-dotenv.config();
+
+const router = Router();
+const rootRouter = baseRoutes(router);
 
 const app = express();
- 
-const router = Router();
-const rootRouter = baseRoute(router);
 
-
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, 'uploads/');  // Directory to save the uploaded files
-  },  
-  filename: function (req, file, cb) {
-    cb(null, `${Date.now()}-${file.originalname}`);  // Naming the file
-  }
-});
-
-const upload = multer({ storage });
-
-
-
-
+app.use(cors());
 app.use(express.json());
+app.use(urlencoded({ extended: false }));
+// app.use(morgan("combined"));
 
-app.use(bodyParser.json());
-app.use(cookieParser());
-app.use(
-  cors(
-      {
-          origin:["http://localhost:5173","https://mediaHub.vercel.app"],
-          credentials:true,
-      }
-  )
-);
+const port = env.port;
+/*
+const baseURL =
+  env.node_env === "development" ? "/axislink/api/v1" : "/axislink/api/v1/stag";
 
+app.use(baseURL, rootRouter);*/
+app.use("/api/v1",rootRouter);
+connectDB();
 
-// Configuring express-session middleware
-app.use(
-  session({
-    name: "google-auth-session",
-    secret: process.env.SESSION_SECRET,
-    resave: false,
-    saveUninitialized: true,
-    cookie: { secure: false },
-  })
-);
-
-// Initialize Passport middleware
-app.use(passport.initialize());
-app.use(passport.session());
-
-// Database connection function
-// database();
-
-// Apply Google OAuth authentication
-googleAuthMiddleware(app);
-
-// route for home page
-app.get("/", (req, res) => {
-  res.send("Welcome to MediaHub, Please sign up or log in to continue");
+app.use("*", (req, res) => {
+  res
+    .status(404)
+    .send({ message: "Resource URL not found", success: false, data: null });
 });
 
-// Use home route for Google authentication route
-app.use("/", googleAuthRoutes);
+app.use(ErrorHandler);
 
-
-// routes
-app.use("/api/v1", rootRouter);
-
-
-//Error middleware
-app.use(errorHandler);
-
-
-//Database connection function
-  database();
-
-const PORT = process.env.PORT || 5000;
-app.listen(PORT,()=>{
-     console.log(`Server running on port ${PORT} 🔥 ` );
+app.listen(port, () => {
+  console.log(`server up and running @ port ${port}`);
 });

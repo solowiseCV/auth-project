@@ -12,7 +12,7 @@ export const sendEmail = async (data)=>{
          }
      });
      const info = await transport.sendMail({
-           from :`Krptonite <aliOfficialSolomon@gmail.com`,
+           from :`soloTech <aliOfficialSolomon@gmail.com`,
             to: data.email,
             subject: data.subject,
             html: data.html
